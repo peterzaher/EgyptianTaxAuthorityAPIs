@@ -6,6 +6,7 @@ Imports EInvoicing.WebApiResponseModel.SubmissionResponse
 Imports EInvoicing.WebApiResponseModel.RecentDocuments
 Imports EInvoicing.WebApiResponseModel.Documents
 Imports System.Net.Http
+Imports EInvoicing.Processing
 
 Public Class Form1
 

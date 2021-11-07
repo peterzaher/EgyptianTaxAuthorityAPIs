@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using EInvoicing.DocumentComponent;
 
-namespace EInvoicing;
+namespace EInvoicing.Processing;
 
 internal static class DocumentSerialization
 {

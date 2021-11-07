@@ -19,7 +19,7 @@ using System.Formats.Asn1;
 [assembly: InternalsVisibleTo("EInvoiceUnitTests")]
 
 
-namespace EInvoicing;
+namespace EInvoicing.Processing;
 
 internal static class DocumentProcessing
 {

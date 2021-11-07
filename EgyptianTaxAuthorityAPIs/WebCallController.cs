@@ -11,7 +11,7 @@ using EInvoicing.WebApiResponseModel.RecentDocuments;
 using EInvoicing.WebApiResponseModel.SubmissionResponse;
 using EInvoicing.WebApiResponseModel.Submissions;
 using EInvoicing.WebApiResponseModel.Documents;
-
+using EInvoicing.Processing;
 
 namespace EInvoicing;
 
