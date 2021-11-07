@@ -27,13 +27,13 @@ internal static class DocumentProcessing
 	{
 		foreach (DocumentModel doc in documentList)
 		{
-			string documentAsTxt = await Task.Run(() => DocumentSerializtion.ConvertDocumentToText(doc));
+			string documentAsTxt = await Task.Run(() => DocumentSerialization.ConvertDocumentToText(doc));
 			byte[] documentUtf8Encoded = Encoding.UTF8.GetBytes(documentAsTxt);
 			string signedDocument = await DocumentSigning.ComputeSignture(documentUtf8Encoded);
 			SignatureModel signature = new(signedDocument);
 			doc.Signatures.Add(signature);
 		}
 		var documents = new { documents = documentList };
-		return DocumentSerializtion.SerializeToJson(documents);
+		return DocumentSerialization.SerializeToJson(documents);
 	}
 }

@@ -8,7 +8,7 @@ using EInvoicing.DocumentComponent;
 
 namespace EInvoicing;
 
-internal static class DocumentSerializtion
+internal static class DocumentSerialization
 {
 	internal static string ConvertDocumentToText(object document)
 	{
