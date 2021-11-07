@@ -13,8 +13,6 @@ internal static class DocumentSigning
 	{
 		X509Certificate2 signerCertificate = GetSigningCertificate();
 
-		Signature.GetSignature(signerCertificate); //testing serial number
-
 		Oid messageDigestOid = new("1.2.840.113549.1.7.5");
 		ContentInfo content = new(messageDigestOid, documentAsBytes);
 		SignedCms signedCms = new(SubjectIdentifierType.IssuerAndSerialNumber, content, true);
