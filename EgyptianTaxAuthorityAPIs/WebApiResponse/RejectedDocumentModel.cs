@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace EInvoicing.WebApiResponseModel.SubmissionResponse
+namespace EInvoicing.WebApiResponse
 {
 	public class RejectedDocumentModel
 	{

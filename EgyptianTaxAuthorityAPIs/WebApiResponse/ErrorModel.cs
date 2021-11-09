@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using System.Collections.Generic;
 
-namespace EInvoicing.WebApiResponseModel
+namespace EInvoicing.WebApiResponse
 {
 	public class ErrorModel
 	{

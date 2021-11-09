@@ -2,9 +2,9 @@
 using System.Threading.Tasks;
 using System.Net.Http.Json;
 
-namespace EInvoicing.WebApiResponseModel.Documents;
+namespace EInvoicing.WebApiResponse;
 
-internal class Document : IDocumentReceiver
+internal class Document
 {
 	public async Task<DocumentStatusModel> GetDocumentAsync(HttpClient httpClient, string documentUuid)
 	{

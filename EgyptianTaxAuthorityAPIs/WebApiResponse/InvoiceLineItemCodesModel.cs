@@ -1,4 +1,4 @@
-﻿namespace EInvoicing.WebApiResponseModel.Documents;
+﻿namespace EInvoicing.WebApiResponse;
 
 public class InvoiceLineItemCodesModel
 {

@@ -4,10 +4,12 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
+using EInvoicing.Queries;
+using EInvoicing.WebApiResponse;
 
-namespace EInvoicing.WebApiResponseModel.Submissions;
+namespace EInvoicing.Queries;
 
-public class Submission : ISubmissionReceiver
+public class SubmissionQuery
 {
 	public string Submissionid { get; set; }
 	public int DocumentCount { get; set; }
@@ -16,7 +18,7 @@ public class Submission : ISubmissionReceiver
 	public IList<DocumentSummaryModel> DocumentSummary { get; set; }
 	public MetadataModel Metadata { get; set; }
 
-	public async Task<Submission> GetSubmissionAsync(HttpClient client, string uuid, int pageNumber = 0, int pageSize = 0)
+	internal static async Task<SubmissionQuery> GetSubmissionAsync(HttpClient client, string uuid, int pageNumber = 0, int pageSize = 0)
 	{
 		string path = $"/api/v1.0/documentsubmissions/{uuid}?pageNo={pageNumber}&pageSize={pageSize}";
 
@@ -26,7 +28,7 @@ public class Submission : ISubmissionReceiver
 			PropertyNamingPolicy = JsonNamingPolicy.CamelCase
 		};
 
-		Submission submissionStatus = await client.GetFromJsonAsync<Submission>(path, options);
+		SubmissionQuery submissionStatus = await client.GetFromJsonAsync<SubmissionQuery>(path, options);
 		return submissionStatus;
 
 	}

@@ -6,27 +6,26 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
 using EInvoicing.DocumentComponent;
-using EInvoicing.WebApiResponseModel;
-using EInvoicing.WebApiResponseModel.RecentDocuments;
-using EInvoicing.WebApiResponseModel.SubmissionResponse;
-using EInvoicing.WebApiResponseModel.Submissions;
-using EInvoicing.WebApiResponseModel.Documents;
+using EInvoicing.WebApiResponse;
 using EInvoicing.Processing;
+using EInvoicing.Queries;
 
 namespace EInvoicing;
 
 public static class WebCallController
 {
-	internal static readonly HttpClient client = new();
+	private static readonly HttpClient client = new();
 	private static readonly Uri identityUrl = new(@"https://id.eta.gov.eg/connect/token");
 	private static readonly Uri baseUri = new(@"https://api.invoicing.eta.gov.eg");
 	private static string sqlConnectionStr;
 	private static DateTime tokenStartTime;
 
+	internal static HttpClient Client => client;
+
 	public static void Initialize(string sqlDBConnectionString = "data source=dbsrv1;initial catalog=manufacturing;user id=sa;password=''")
 	{
 		sqlConnectionStr = sqlDBConnectionString;
-		client.BaseAddress = baseUri;
+		Client.BaseAddress = baseUri;
 
 		//temp code for test and debug
 		//string temp = "";
@@ -38,7 +37,7 @@ public static class WebCallController
 		DateTime tokenElapsedTime = tokenStartTime.AddMinutes(58);
 		int tokenExpired = DateTime.Compare(DateTime.Now, tokenElapsedTime);
 
-		if (client.DefaultRequestHeaders.Authorization == null || tokenExpired > 0)
+		if (Client.DefaultRequestHeaders.Authorization == null || tokenExpired > 0)
 		{
 			return false;
 		}
@@ -52,21 +51,21 @@ public static class WebCallController
 		if (string.IsNullOrEmpty(token))
 		{
 			token = await GetTokenFromWebApi();
-			SetClientHeaders(token);
+			SetHttpHeaders(token);
 			tokenStartTime = DateTime.Now;
 			return;
 		}
 
-		SetClientHeaders(token);
+		SetHttpHeaders(token);
 		tokenStartTime = startTime;
 	}
 
-	private static void SetClientHeaders(string token)
+	private static void SetHttpHeaders(string token)
 	{
-		client.DefaultRequestHeaders.Clear();
-		client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-		client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("en"));
-		client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+		Client.DefaultRequestHeaders.Clear();
+		Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+		Client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("en"));
+		Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 	}
 
 	private static async Task<string> GetTokenFromWebApi()
@@ -75,8 +74,8 @@ public static class WebCallController
 
 		string encodedStr = BuildAuthorizationCode(userId, password);
 
-		client.DefaultRequestHeaders.Clear();
-		client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", encodedStr);
+		Client.DefaultRequestHeaders.Clear();
+		Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", encodedStr);
 
 		Dictionary<string, string> requestContent = new()
 		{
@@ -84,7 +83,7 @@ public static class WebCallController
 		};
 
 		FormUrlEncodedContent content = new(requestContent);
-		HttpResponseMessage response = await client.PostAsync(identityUrl, content);
+		HttpResponseMessage response = await Client.PostAsync(identityUrl, content);
 
 		if (!response.IsSuccessStatusCode)
 		{
@@ -98,7 +97,7 @@ public static class WebCallController
 #if DEBUG
 		if (System.IO.Directory.Exists("c:\\Doc\\DebugOutput"))
 		{
-			System.IO.File.WriteAllLines("c:\\Doc\\DebugOutput\\Token.txt", new string[] { client.DefaultRequestHeaders.Authorization.Parameter });
+			System.IO.File.WriteAllLines("c:\\Doc\\DebugOutput\\Token.txt", new string[] { Client.DefaultRequestHeaders.Authorization.Parameter });
 		}
 #endif
 		await DataAccess.Credential.PersistToken(sqlConnectionStr, jsonResponse.AccessToken);
@@ -117,27 +116,25 @@ public static class WebCallController
 	{
 		if (!IsTokenValid()) await GetAccessTokenAsync();
 		string jsonDocs = await DocumentProcessing.PrepareDocumentsToSend(documents);
-		return await DocumentModel.SubmitDocumentsAsync(jsonDocs, client);
+		return await DocumentModel.SubmitDocumentsAsync(jsonDocs, Client);
 	}
 
-	public static async Task<RecentDocumentModel> GetRecentDocumentsAsync(int pageNumber = 1, int pageSize = 10)
+	public static async Task<RecentDocumentQuery> GetRecentDocumentsAsync(int pageNumber = 1, int pageSize = 10)
 	{
 		if (!IsTokenValid()) await GetAccessTokenAsync();
-		IRecentDocumentReceiver recentDocuments = new RecentDocumentModel();
-		return await recentDocuments.GetRecentDocumentsAsync(pageNumber, pageSize, client);
+		return await RecentDocumentQuery.GetRecentDocumentsAsync(pageNumber, pageSize, Client);
 	}
 
-	public static async Task<Submission> GetSubmissionStatusAysnc(string uuid, int pageNumber, int pageSize)
+	public static async Task<SubmissionQuery> GetSubmissionStatusAysnc(string uuid, int pageNumber, int pageSize)
 	{
 		if (!IsTokenValid()) await GetAccessTokenAsync();
-		ISubmissionReceiver submission = new Submission();
-		return await submission.GetSubmissionAsync(client, uuid, pageNumber, pageSize);
+		return await SubmissionQuery.GetSubmissionAsync(Client, uuid, pageNumber, pageSize);
 	}
 
 	public static async Task<DocumentStatusModel> GetDocumentStatusAsync(string documentUuid)
 	{
 		if (!IsTokenValid()) await GetAccessTokenAsync();
-		IDocumentReceiver document = new Document();
-		return await document.GetDocumentAsync(client, documentUuid);
+		Document document = new Document();
+		return await document.GetDocumentAsync(Client, documentUuid);
 	}
 }

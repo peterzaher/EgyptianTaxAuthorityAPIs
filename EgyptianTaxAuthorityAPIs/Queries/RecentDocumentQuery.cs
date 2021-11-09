@@ -5,10 +5,11 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using EInvoicing.WebApiResponse;
 
-namespace EInvoicing.WebApiResponseModel.RecentDocuments;
+namespace EInvoicing.Queries;
 
-public class RecentDocumentModel : IRecentDocumentReceiver
+public class RecentDocumentQuery
 {
 	[JsonPropertyName("result")]
 	public List<DocumentSummaryModel> DocumentsSummary { get; set; } = new();
@@ -16,7 +17,7 @@ public class RecentDocumentModel : IRecentDocumentReceiver
 	[JsonPropertyName("metadata")]
 	public MetadataModel Metadata { get; set; } = new();
 
-	public async Task<RecentDocumentModel> GetRecentDocumentsAsync(int pageNumber, int pageSize, HttpClient client)
+	internal static async Task<RecentDocumentQuery> GetRecentDocumentsAsync(int pageNumber, int pageSize, HttpClient client)
 	{
 		string path = $"api/v1.0/documents/recent?pageNo={pageNumber}&pageSize={pageSize}";
 		JsonSerializerOptions jsonOptions = new()
@@ -27,7 +28,7 @@ public class RecentDocumentModel : IRecentDocumentReceiver
 
 		try
 		{
-			RecentDocumentModel submittedDocuments = await client.GetFromJsonAsync<RecentDocumentModel>(path, jsonOptions);
+			RecentDocumentQuery submittedDocuments = await client.GetFromJsonAsync<RecentDocumentQuery>(path, jsonOptions);
 			return submittedDocuments;
 		}
 		catch (HttpRequestException e)

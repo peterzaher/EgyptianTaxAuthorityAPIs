@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace EInvoicing.WebApiResponseModel;
+namespace EInvoicing.WebApiResponse;
 
 internal class AuthenticationResponseModel
 {

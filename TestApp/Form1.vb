@@ -1,12 +1,9 @@
-﻿Imports EInvoicing.WebApiResponseModel
-Imports EInvoicing.DocumentComponent
+﻿Imports EInvoicing.DocumentComponent
 Imports EInvoicing
-Imports EInvoicing.WebApiResponseModel.Submissions
-Imports EInvoicing.WebApiResponseModel.SubmissionResponse
-Imports EInvoicing.WebApiResponseModel.RecentDocuments
-Imports EInvoicing.WebApiResponseModel.Documents
 Imports System.Net.Http
 Imports EInvoicing.Processing
+Imports EInvoicing.Queries
+Imports EInvoicing.WebApiResponse
 
 Public Class Form1
 
@@ -60,7 +57,6 @@ Public Class Form1
 	End Sub
 
 	Private Async Sub GetRecentDocuments(sender As Object, e As EventArgs) Handles GetDocuments.Click
-
 		Dim sender1 As Button = DirectCast(sender, Button)
 		sender1.Enabled = False
 
@@ -69,7 +65,7 @@ Public Class Form1
 		Debug.WriteLine("")
 
 		Try
-			Dim recentDocs As RecentDocumentModel = Await WebCallController.GetRecentDocumentsAsync(1, number)
+			Dim recentDocs As RecentDocumentQuery = Await WebCallController.GetRecentDocumentsAsync(1, number)
 			For Each doc As DocumentSummaryModel In recentDocs.DocumentsSummary
 				Debug.WriteLine($"Invoice Id :  {doc.UUID}")
 				Debug.WriteLine("------------------------------------------")
@@ -336,7 +332,7 @@ Public Class Form1
 		Dim btn As Button = DirectCast(sender, Button)
 		btn.Enabled = False
 		Dim submissionUuid As String = SubmissionUUIDTextBox.Text
-		Dim submissionStatus As Submission
+		Dim submissionStatus As SubmissionQuery
 		Try
 			submissionStatus = Await WebCallController.GetSubmissionStatusAysnc(submissionUuid, 1, 1)
 

@@ -1,4 +1,4 @@
-﻿using EInvoicing.WebApiResponseModel.SubmissionResponse;
+﻿using EInvoicing.WebApiResponse;
 using System;
 using System.Collections.Generic;
 using System.Linq;
