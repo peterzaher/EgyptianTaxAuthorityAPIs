@@ -9,32 +9,26 @@ using EInvoicing.DocumentComponent;
 using EInvoicing.WebApiResponse;
 using EInvoicing.Processing;
 using EInvoicing.Queries;
+using DataAccess;
 
 namespace EInvoicing;
 
 public static class WebCallController
 {
-	private static readonly HttpClient client = new();
-	private static readonly Uri identityUrl = new(@"https://id.eta.gov.eg/connect/token");
-	private static readonly Uri baseUri = new(@"https://api.invoicing.eta.gov.eg");
-	private static string sqlConnectionStr;
-	private static DateTime tokenStartTime;
+	private static string _sqlConnectionStr;
+	private static DateTime _tokenStartTime;
+	internal static HttpClient Client { get; } = new();
 
-	internal static HttpClient Client => client;
-
-	public static void Initialize(string sqlDBConnectionString = "data source=dbsrv1;initial catalog=manufacturing;user id=sa;password=''")
+	public static async void Initialize(string sqlDBConnectionString = "data source=dbsrv1;initial catalog=manufacturing;user id=sa;password=''")
 	{
-		sqlConnectionStr = sqlDBConnectionString;
-		Client.BaseAddress = baseUri;
-
-		//temp code for test and debug
-		//string temp = "";
-		//client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", temp);
+		_sqlConnectionStr = sqlDBConnectionString;
+		//Client.BaseAddress = new Uri(@"https://api.invoicing.eta.gov.eg");
+		Client.BaseAddress = new Uri(await WebApiParameter.GetParameterByKey(_sqlConnectionStr, "BaseUrl"));
 	}
 
 	private static bool IsTokenValid()
 	{
-		DateTime tokenElapsedTime = tokenStartTime.AddMinutes(58);
+		DateTime tokenElapsedTime = _tokenStartTime.AddMinutes(58);
 		int tokenExpired = DateTime.Compare(DateTime.Now, tokenElapsedTime);
 
 		if (Client.DefaultRequestHeaders.Authorization == null || tokenExpired > 0)
@@ -46,18 +40,18 @@ public static class WebCallController
 
 	private static async Task GetAccessTokenAsync()
 	{
-		(string token, DateTime startTime) = await DataAccess.Credential.GetTokenFromLocalDB(sqlConnectionStr);
+		(string token, DateTime startTime) = await DataAccess.Credential.GetTokenFromLocalDB(_sqlConnectionStr);
 
 		if (string.IsNullOrEmpty(token))
 		{
 			token = await GetTokenFromWebApi();
 			SetHttpHeaders(token);
-			tokenStartTime = DateTime.Now;
+			_tokenStartTime = DateTime.Now;
 			return;
 		}
 
 		SetHttpHeaders(token);
-		tokenStartTime = startTime;
+		_tokenStartTime = startTime;
 	}
 
 	private static void SetHttpHeaders(string token)
@@ -70,7 +64,7 @@ public static class WebCallController
 
 	private static async Task<string> GetTokenFromWebApi()
 	{
-		(string userId, string password) = await DataAccess.Credential.GetETACredentialAsync(sqlConnectionStr);
+		(string userId, string password) = await DataAccess.Credential.GetETACredentialAsync(_sqlConnectionStr);
 
 		string encodedStr = BuildAuthorizationCode(userId, password);
 
@@ -83,6 +77,10 @@ public static class WebCallController
 		};
 
 		FormUrlEncodedContent content = new(requestContent);
+
+		//Uri identityUrl = new(@"https://id.eta.gov.eg/connect/token");
+		Uri identityUrl = new(await WebApiParameter.GetParameterByKey(_sqlConnectionStr, "IdentityUrl"));
+
 		HttpResponseMessage response = await Client.PostAsync(identityUrl, content);
 
 		if (!response.IsSuccessStatusCode)
@@ -100,7 +98,7 @@ public static class WebCallController
 			System.IO.File.WriteAllLines("c:\\Doc\\DebugOutput\\Token.txt", new string[] { Client.DefaultRequestHeaders.Authorization.Parameter });
 		}
 #endif
-		await DataAccess.Credential.PersistToken(sqlConnectionStr, jsonResponse.AccessToken);
+		await DataAccess.Credential.PersistToken(_sqlConnectionStr, jsonResponse.AccessToken);
 
 		return jsonResponse.AccessToken;
 	}

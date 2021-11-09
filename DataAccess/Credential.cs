@@ -47,17 +47,19 @@ internal static class Credential
 			await reader.ReadAsync();
 			token = (reader.GetString("Value"), reader.GetDateTime("LastModified"));
 		}
+		conn.Close();
 		return token;
 	}
 
 	internal static async Task PersistToken(string sqlConnectionStr, string token)
 	{
 		using SqlConnection conn = new(sqlConnectionStr);
-		SqlCommand cmd = new("eta.usp_SaveToken", conn);
+		using SqlCommand cmd = new("eta.usp_SaveToken", conn);
 		cmd.CommandType = CommandType.StoredProcedure;
 		cmd.Parameters.Add("@token", SqlDbType.VarChar).Value = token;
 
 		await conn.OpenAsync();
 		await cmd.ExecuteNonQueryAsync();
+		conn.Close();
 	}
 }
