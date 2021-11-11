@@ -10,19 +10,22 @@ using EInvoicing.WebApiResponse;
 using EInvoicing.Processing;
 using EInvoicing.Queries;
 using DataAccess;
+using System.Data.SqlClient;
 
 namespace EInvoicing;
 
-public static class WebCallController
+public class WebCallController
 {
-	private static string _sqlConnectionStr;
+	private string _userId;
+	private string _password;
 	private static DateTime _tokenStartTime;
 	private static HttpClient Client { get; } = new();
+	public string SqlConnectionStr { get; set; }
 
-	public static async void Initialize(string sqlDBConnectionString = "data source=dbsrv1;initial catalog=manufacturing;user id=sa;password=''")
+	public WebCallController(string sqlDBConnectionString = "data source=dbsrv1;initial catalog=manufacturing;user id=sa;password=''")
 	{
-		_sqlConnectionStr = sqlDBConnectionString;
-		Client.BaseAddress = new Uri(await WebApiParameter.GetParameterByKey(_sqlConnectionStr, "BaseUrl"));
+		SqlClientFactory sqlClientFactory = SqlClientFactory.Instance;
+		SqlConnectionStr = sqlClientFactory.CreateConnection().ConnectionString = sqlDBConnectionString;
 	}
 
 	private static bool IsTokenValid()
@@ -37,35 +40,30 @@ public static class WebCallController
 		return true;
 	}
 
-	private static async Task GetAccessTokenAsync()
+	private async Task GetAccessTokenAsync(string sqlDbConnectionStr)
 	{
-		(string token, DateTime startTime) = await DataAccess.Credential.GetTokenFromLocalDB(_sqlConnectionStr);
+		(string token, DateTime startTime) = await Credential.GetTokenFromLocalDB(sqlDbConnectionStr);
 
 		if (string.IsNullOrEmpty(token))
 		{
-			token = await GetTokenFromWebApi(_sqlConnectionStr);
-			SetHttpHeaders(token);
+			token = await GetTokenFromWebApi(sqlDbConnectionStr);
+			await SetHttpHeaders(token);
 			_tokenStartTime = DateTime.Now;
 			return;
 		}
 
-		SetHttpHeaders(token);
+		await SetHttpHeaders(token);
 		_tokenStartTime = startTime;
 	}
 
-	private static void SetHttpHeaders(string token)
+	private async Task<string> GetTokenFromWebApi(string sqlConnectionStr)
 	{
-		Client.DefaultRequestHeaders.Clear();
-		Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-		Client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("en"));
-		Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-	}
+		if (string.IsNullOrEmpty(_userId) || string.IsNullOrEmpty(_password))
+		{
+			(_userId, _password) = await Credential.GetETACredentialAsync(sqlConnectionStr);
+		}
 
-	private static async Task<string> GetTokenFromWebApi(string sqlConnectionStr)
-	{
-		(string userId, string password) = await Credential.GetETACredentialAsync(sqlConnectionStr);
-
-		string encodedStr = BuildAuthorizationCode(userId, password);
+		string encodedStr = BuildAuthorizationCode(_userId, _password);
 
 		Client.DefaultRequestHeaders.Clear();
 		Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", encodedStr);
@@ -96,9 +94,18 @@ public static class WebCallController
 			System.IO.File.WriteAllLines("c:\\Doc\\DebugOutput\\Token.txt", new string[] { Client.DefaultRequestHeaders.Authorization.Parameter });
 		}
 #endif
-		await DataAccess.Credential.PersistToken(_sqlConnectionStr, jsonResponse.AccessToken);
+		await Credential.PersistToken(SqlConnectionStr, jsonResponse.AccessToken);
 
 		return jsonResponse.AccessToken;
+	}
+
+	private async Task SetHttpHeaders(string token)
+	{
+		Client.DefaultRequestHeaders.Clear();
+		Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+		Client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("en"));
+		Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+		Client.BaseAddress = new Uri(await WebApiParameter.GetParameterByKey(SqlConnectionStr, "BaseUrl"));
 	}
 
 	private static string BuildAuthorizationCode(string userId, string secret)
@@ -108,28 +115,28 @@ public static class WebCallController
 		return Convert.ToBase64String(textBytes);
 	}
 
-	public static async Task<SubmissionResponseModel> SubmitDocumentsAsync(IList<DocumentModel> documents)
+	public async Task<SubmissionResponseModel> SubmitDocumentsAsync(IList<DocumentModel> documents)
 	{
-		if (!IsTokenValid()) await GetAccessTokenAsync();
+		if (!IsTokenValid()) await GetAccessTokenAsync(SqlConnectionStr);
 		string jsonDocs = await DocumentProcessing.PrepareDocumentsToSend(documents);
 		return await DocumentModel.SubmitDocumentsAsync(jsonDocs, Client);
 	}
 
-	public static async Task<RecentDocumentQuery> GetRecentDocumentsAsync(int pageNumber = 1, int pageSize = 10)
+	public async Task<RecentDocumentQuery> GetRecentDocumentsAsync(int pageNumber = 1, int pageSize = 10)
 	{
-		if (!IsTokenValid()) await GetAccessTokenAsync();
+		if (!IsTokenValid()) await GetAccessTokenAsync(SqlConnectionStr);
 		return await RecentDocumentQuery.GetRecentDocumentsAsync(pageNumber, pageSize, Client);
 	}
 
-	public static async Task<SubmissionQuery> GetSubmissionStatusAysnc(string uuid, int pageNumber, int pageSize)
+	public async Task<SubmissionQuery> GetSubmissionStatusAysnc(string uuid, int pageNumber, int pageSize)
 	{
-		if (!IsTokenValid()) await GetAccessTokenAsync();
+		if (!IsTokenValid()) await GetAccessTokenAsync(SqlConnectionStr);
 		return await SubmissionQuery.GetSubmissionAsync(Client, uuid, pageNumber, pageSize);
 	}
 
-	public static async Task<DocumentStatusModel> GetDocumentStatusAsync(string documentUuid)
+	public async Task<DocumentStatusModel> GetDocumentStatusAsync(string documentUuid)
 	{
-		if (!IsTokenValid()) await GetAccessTokenAsync();
+		if (!IsTokenValid()) await GetAccessTokenAsync(SqlConnectionStr);
 		Document document = new Document();
 		return await document.GetDocumentAsync(Client, documentUuid);
 	}

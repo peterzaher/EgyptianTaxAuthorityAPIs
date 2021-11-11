@@ -6,9 +6,7 @@ Imports EInvoicing.Queries
 Imports EInvoicing.WebApiResponse
 
 Public Class Form1
-
-	Dim userid As String = "890e4904-690e-470b-b6b6-8892d211350e"
-	Dim secret As String = "2e7b9e35-d50b-45d4-839c-f0a7205eb74b"
+	ReadOnly webCallController = New WebCallController()
 
 	Private Async Sub SignDocumets(sender As Object, e As EventArgs) Handles SignDocumentsBtn.Click
 		'Dim a As IRecentDocumentReceiver
@@ -65,7 +63,7 @@ Public Class Form1
 		Debug.WriteLine("")
 
 		Try
-			Dim recentDocs As RecentDocumentQuery = Await WebCallController.GetRecentDocumentsAsync(1, number)
+			Dim recentDocs As RecentDocumentQuery = Await webCallController.GetRecentDocumentsAsync(1, number)
 			For Each doc As DocumentSummaryModel In recentDocs.DocumentsSummary
 				Debug.WriteLine($"Invoice Id :  {doc.UUID}")
 				Debug.WriteLine("------------------------------------------")
@@ -277,7 +275,7 @@ Public Class Form1
 		'Dim a = DocumentProcessing.SerializeToJson(documents)
 		'Debug.WriteLine(a)
 
-		Dim response As SubmissionResponseModel = Await WebCallController.SubmitDocumentsAsync(documents)
+		Dim response As SubmissionResponseModel = Await webCallController.SubmitDocumentsAsync(documents)
 
 
 		'Dim successReponse = TryCast(response, SubmitResponse)
@@ -324,17 +322,13 @@ Public Class Form1
 
 	End Sub
 
-	Private Sub Form1_Load(sender As Object, e As EventArgs) Handles Me.Load
-		WebCallController.Initialize()
-	End Sub
-
 	Private Async Sub GetSubmissionStatus_Click(sender As Object, e As EventArgs) Handles GetSubmissionStatus.Click
 		Dim btn As Button = DirectCast(sender, Button)
 		btn.Enabled = False
 		Dim submissionUuid As String = SubmissionUUIDTextBox.Text
 		Dim submissionStatus As SubmissionQuery
 		Try
-			submissionStatus = Await WebCallController.GetSubmissionStatusAysnc(submissionUuid, 1, 1)
+			submissionStatus = Await webCallController.GetSubmissionStatusAysnc(submissionUuid, 1, 1)
 
 			Debug.WriteLine("SubmissionId: " + submissionStatus.Submissionid + vbTab)
 			Debug.WriteLine("Document count: " + submissionStatus.DocumentCount.ToString())
@@ -359,11 +353,13 @@ Public Class Form1
 	End Sub
 
 	Private Async Sub GetDocStatus_Click(sender As Object, e As EventArgs) Handles GetDocStatus.Click
+		Dim btn As Button = DirectCast(sender, Button)
+		btn.Enabled = False
 
 		Dim docUuid As String = DocUuidTxtBox.Text
 		Try
 			Dim document As New DocumentStatusModel()
-			document = Await WebCallController.GetDocumentStatusAsync(docUuid)
+			document = Await webCallController.GetDocumentStatusAsync(docUuid)
 			Debug.WriteLine("")
 			Debug.Print("DETAILS OF DOCUMENT NUMBER: " + docUuid)
 			Debug.WriteLine("-------------------------------------------")
@@ -382,13 +378,19 @@ Public Class Form1
 			Debug.Fail(errorString)
 			MsgBox(errorString)
 		End Try
+
+		btn.Enabled = True
 	End Sub
 
 	Private Async Sub GetEtaCredBtn_Click(sender As Object, e As EventArgs) Handles GetEtaCredBtn.Click
-		Dim connectionString As String = "data source=dbsrv1;initial catalog=manufacturing;user id=sa;password=''"
-		Dim Credential As (userId As String, password As String) = Await DataAccess.Credential.GetETACredentialAsync(connectionString)
+		Dim btn As Button = DirectCast(sender, Button)
+		btn.Enabled = False
+
+		Dim Credential As (userId As String, password As String) = Await DataAccess.Credential.GetETACredentialAsync(webCallController.SqlConnectionStr)
 		Debug.WriteLine(Credential.userId)
 		Debug.WriteLine(Credential.password)
+
+		btn.Enabled = True
 	End Sub
 End Class
 
