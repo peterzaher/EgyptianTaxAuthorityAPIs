@@ -17,12 +17,11 @@ public static class WebCallController
 {
 	private static string _sqlConnectionStr;
 	private static DateTime _tokenStartTime;
-	internal static HttpClient Client { get; } = new();
+	private static HttpClient Client { get; } = new();
 
 	public static async void Initialize(string sqlDBConnectionString = "data source=dbsrv1;initial catalog=manufacturing;user id=sa;password=''")
 	{
 		_sqlConnectionStr = sqlDBConnectionString;
-		//Client.BaseAddress = new Uri(@"https://api.invoicing.eta.gov.eg");
 		Client.BaseAddress = new Uri(await WebApiParameter.GetParameterByKey(_sqlConnectionStr, "BaseUrl"));
 	}
 
@@ -44,7 +43,7 @@ public static class WebCallController
 
 		if (string.IsNullOrEmpty(token))
 		{
-			token = await GetTokenFromWebApi();
+			token = await GetTokenFromWebApi(_sqlConnectionStr);
 			SetHttpHeaders(token);
 			_tokenStartTime = DateTime.Now;
 			return;
@@ -62,9 +61,9 @@ public static class WebCallController
 		Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 	}
 
-	private static async Task<string> GetTokenFromWebApi()
+	private static async Task<string> GetTokenFromWebApi(string sqlConnectionStr)
 	{
-		(string userId, string password) = await DataAccess.Credential.GetETACredentialAsync(_sqlConnectionStr);
+		(string userId, string password) = await Credential.GetETACredentialAsync(sqlConnectionStr);
 
 		string encodedStr = BuildAuthorizationCode(userId, password);
 
@@ -78,8 +77,7 @@ public static class WebCallController
 
 		FormUrlEncodedContent content = new(requestContent);
 
-		//Uri identityUrl = new(@"https://id.eta.gov.eg/connect/token");
-		Uri identityUrl = new(await WebApiParameter.GetParameterByKey(_sqlConnectionStr, "IdentityUrl"));
+		Uri identityUrl = new(await WebApiParameter.GetParameterByKey(sqlConnectionStr, "IdentityUrl"));
 
 		HttpResponseMessage response = await Client.PostAsync(identityUrl, content);
 
