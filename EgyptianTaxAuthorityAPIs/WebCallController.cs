@@ -18,7 +18,7 @@ public class WebCallController
 {
 	private string _userId;
 	private string _password;
-	private static DateTime _tokenStartTime;
+	private static DateTimeOffset _tokenStartTime;
 	private static HttpClient Client { get; } = new();
 	public string SqlConnectionStr { get; set; }
 
@@ -30,8 +30,8 @@ public class WebCallController
 
 	private static bool IsTokenValid()
 	{
-		DateTime tokenElapsedTime = _tokenStartTime.AddMinutes(58);
-		int tokenExpired = DateTime.Compare(DateTime.Now, tokenElapsedTime);
+		DateTimeOffset tokenElapsedTime = _tokenStartTime.AddMinutes(58);
+		int tokenExpired = DateTimeOffset.Compare(DateTime.UtcNow, tokenElapsedTime);
 
 		if (Client.DefaultRequestHeaders.Authorization == null || tokenExpired > 0)
 		{
@@ -42,31 +42,33 @@ public class WebCallController
 
 	private async Task GetAccessTokenAsync(string sqlDbConnectionStr)
 	{
-		(string token, DateTime startTime) = await Credential.GetTokenFromLocalDB(sqlDbConnectionStr);
+		await SetHttpHeaders(Client);
+		(string token, DateTimeOffset startTime) = await Credential.GetTokenFromLocalDbAsync(sqlDbConnectionStr);
 
-		if (string.IsNullOrEmpty(token))
+		if (!string.IsNullOrEmpty(token))
 		{
-			token = await GetTokenFromWebApi(sqlDbConnectionStr);
-			await SetHttpHeaders(token);
-			_tokenStartTime = DateTime.Now;
+			_tokenStartTime = startTime;
+			Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 			return;
 		}
 
-		await SetHttpHeaders(token);
-		_tokenStartTime = startTime;
-	}
-
-	private async Task<string> GetTokenFromWebApi(string sqlConnectionStr)
-	{
 		if (string.IsNullOrEmpty(_userId) || string.IsNullOrEmpty(_password))
 		{
-			(_userId, _password) = await Credential.GetETACredentialAsync(sqlConnectionStr);
+			(_userId, _password) = await Credential.GetCredentialFromDbAsync(sqlDbConnectionStr);
 		}
 
-		string encodedStr = BuildAuthorizationCode(_userId, _password);
+		string authorizationCode = BuildAuthorizationCode(_userId, _password);
+		string identityUrl = await WebApiParameter.GetParameterByKey(sqlDbConnectionStr, "IdentityUrl");
 
-		Client.DefaultRequestHeaders.Clear();
-		Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", encodedStr);
+		token = await GetTokenFromWebApi(authorizationCode, identityUrl);
+		_tokenStartTime = DateTime.Now;
+		Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+	}
+
+	private async Task<string> GetTokenFromWebApi(string authorizationCode, string identityUrl)
+	{
+		HttpClient client = new();
+		client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authorizationCode);
 
 		Dictionary<string, string> requestContent = new()
 		{
@@ -74,11 +76,7 @@ public class WebCallController
 		};
 
 		FormUrlEncodedContent content = new(requestContent);
-
-		Uri identityUrl = new(await WebApiParameter.GetParameterByKey(sqlConnectionStr, "IdentityUrl"));
-
-		HttpResponseMessage response = await Client.PostAsync(identityUrl, content);
-
+		HttpResponseMessage response = await client.PostAsync(identityUrl, content);
 		if (!response.IsSuccessStatusCode)
 		{
 			AuthenticationErrorModel errorResponse = await response.Content.ReadFromJsonAsync<AuthenticationErrorModel>();
@@ -91,21 +89,19 @@ public class WebCallController
 #if DEBUG
 		if (System.IO.Directory.Exists("c:\\Doc\\DebugOutput"))
 		{
-			System.IO.File.WriteAllLines("c:\\Doc\\DebugOutput\\Token.txt", new string[] { Client.DefaultRequestHeaders.Authorization.Parameter });
+			System.IO.File.WriteAllLines("c:\\Doc\\DebugOutput\\Token.txt", new string[] { client.DefaultRequestHeaders.Authorization.Parameter });
 		}
 #endif
+		client.Dispose();
 		await Credential.PersistToken(SqlConnectionStr, jsonResponse.AccessToken);
-
 		return jsonResponse.AccessToken;
 	}
 
-	private async Task SetHttpHeaders(string token)
+	private async Task SetHttpHeaders(HttpClient client)
 	{
-		Client.DefaultRequestHeaders.Clear();
-		Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-		Client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("en"));
-		Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-		Client.BaseAddress = new Uri(await WebApiParameter.GetParameterByKey(SqlConnectionStr, "BaseUrl"));
+		client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+		client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("en"));
+		client.BaseAddress = new Uri(await WebApiParameter.GetParameterByKey(SqlConnectionStr, "BaseUrl"));
 	}
 
 	private static string BuildAuthorizationCode(string userId, string secret)

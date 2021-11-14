@@ -14,9 +14,9 @@ namespace DataAccess;
 
 internal static class Credential
 {
-	internal static async Task<(string, string)> GetETACredentialAsync(string sqlConnectionStr)
+	internal static async Task<(string, string)> GetCredentialFromDbAsync(string sqlConnectionStr)
 	{
-		(string userId, string password) credential = ("", "");
+		(string userId, string password) credential = default;
 		using (SqlConnection conn = new(sqlConnectionStr))
 		{
 			using SqlCommand cmd = new("eta.usp_GetCredential", conn);
@@ -28,14 +28,14 @@ internal static class Credential
 			{
 				credential = (reader.GetString("UserId"), reader.GetString("Secret1"));
 			}
-			reader.Close();
+			await reader.CloseAsync();
 		}
 		return credential;
 	}
 
-	internal static async Task<(string?, DateTime)> GetTokenFromLocalDB(string sqlConnectionStr)
+	internal static async Task<(string, DateTimeOffset)> GetTokenFromLocalDbAsync(string sqlConnectionStr)
 	{
-		(string? value, DateTime startTime) token = (default, default);
+		(string value, DateTimeOffset startTimeOffset) token = default;
 		using SqlConnection conn = new(sqlConnectionStr);
 		using SqlCommand cmd = new("eta.usp_GetToken", conn);
 		cmd.CommandType = CommandType.StoredProcedure;
@@ -45,9 +45,9 @@ internal static class Credential
 		if (reader.HasRows)
 		{
 			await reader.ReadAsync();
-			token = (reader.GetString("Value"), reader.GetDateTime("LastModified"));
+			token = (reader.GetSqlString(0).IsNull ? "" : reader.GetSqlString(0).Value, reader.GetDateTimeOffset(1));
 		}
-		conn.Close();
+		await conn.CloseAsync();
 		return token;
 	}
 
@@ -60,6 +60,6 @@ internal static class Credential
 
 		await conn.OpenAsync();
 		await cmd.ExecuteNonQueryAsync();
-		conn.Close();
+		await conn.CloseAsync();
 	}
 }

@@ -386,7 +386,7 @@ Public Class Form1
 		Dim btn As Button = DirectCast(sender, Button)
 		btn.Enabled = False
 
-		Dim Credential As (userId As String, password As String) = Await DataAccess.Credential.GetETACredentialAsync(webCallController.SqlConnectionStr)
+		Dim Credential As (userId As String, password As String) = Await DataAccess.Credential.GetCredentialFromDbAsync(webCallController.SqlConnectionStr)
 		Debug.WriteLine(Credential.userId)
 		Debug.WriteLine(Credential.password)
 
