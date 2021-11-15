@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Excludes TestApp VB project
+/TestApp
+
 # User-specific files
 *.rsuser
 *.suo
