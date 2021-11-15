@@ -51,7 +51,7 @@ internal static class Credential
 		return token;
 	}
 
-	internal static async Task PersistToken(string sqlConnectionStr, string token)
+	internal static async Task PersistTokenToDbAsync(string token, string sqlConnectionStr)
 	{
 		using SqlConnection conn = new(sqlConnectionStr);
 		using SqlCommand cmd = new("eta.usp_SaveToken", conn);
