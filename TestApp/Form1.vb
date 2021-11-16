@@ -232,41 +232,42 @@ Public Class Form1
 		'Mostafa National Id: 26806240102792
 		Dim issuer As New IssuerReceiverInfoModel("شركه المنزل للمفروشات هابيتات", "204961254", "B", issuerAddress)
 
-		Dim receiverAddress As New AddressModel("EG", "Alexandria", "Montaza", "جمال عبد الناصر", "73") With
+		Dim receiverAddress As New AddressModel("EG", "Daqahlyaa", "Elmanzala", "Hassan Tobar", "Hegazy tower") With
 			{
 			.Floor = "1"
 			}
 
-		Dim receiver As New IssuerReceiverInfoModel("محمد أحمد محمد محمد", "286614464", "B", receiverAddress)
+		Dim receiver As New IssuerReceiverInfoModel("أسماء ابراهيم سعد الداودي", "577397214", "B", receiverAddress)
 
-		Dim invoiceLine1 As New InvoiceLineModel("02011622A", 1, 2029) With
+		Dim invoiceLine1 As New InvoiceLineModel("02110402D", 2, 216) With
 		{
-		.Description = "LAMINATION MATTRESS NEW GOLD 120x190",
+		.Description = "Super Relax Pillow 40x120CM",
 		.UnitType = UnitTypeCode.EA
 		}
 
-		'Dim invoiceLine2 As New InvoiceLineModel("02110413A", 5, 194) With
-		'{
-		'.Description = "Pillow Fiber 40X120CM",
-		'.UnitType = UnitTypeCode.EA
-		'}
+		Dim invoiceLine2 As New InvoiceLineModel("02110402G", 2, 306) With
+		{
+		.Description = "Super Relax Pillow 40x170CM",
+		.UnitType = UnitTypeCode.EA
+		}
 
-		Dim discount1 As New DiscountModel(19)
+		Dim discount1 As New DiscountModel(17)
 		Dim taxableItem1 As New TaxableItemModel(TaxTypeCode.T1)
 
 		invoiceLine1.Discount = discount1
 		invoiceLine1.TaxableItems.Add(taxableItem1)
 		'invoiceLine1.TaxableItems = New List(Of TaxableItemModel) From {taxableItem1}
 
-		'invoiceLine2.Discount = discount1
-		'invoiceLine2.TaxableItems.Add(taxableItem1)
+		invoiceLine2.Discount = discount1
+		Dim taxableItem2 As New TaxableItemModel(TaxTypeCode.T1)
+		invoiceLine2.TaxableItems.Add(taxableItem2)
 		'invoiceLine2.TaxableItems = New List(Of TaxableItemModel) From {taxableItem1}
 
-		Dim invoiceLines = New InvoiceLineModel() {invoiceLine1} ', invoiceLine2}
-		Dim document As New DocumentModel(issuer, receiver, invoiceLines, "62109644")
+		Dim invoiceLines = New InvoiceLineModel() {invoiceLine1, invoiceLine2}
+		Dim document As New DocumentModel(issuer, receiver, invoiceLines, "62110035")
 
 		document.ExtraDiscountAmount = 0
-		document.DateTimeIssued = "2021-10-26T13:05"
+		document.DateTimeIssued = "2021-11-13T14:25"
 
 		Dim documents = New List(Of DocumentModel) From {document}
 

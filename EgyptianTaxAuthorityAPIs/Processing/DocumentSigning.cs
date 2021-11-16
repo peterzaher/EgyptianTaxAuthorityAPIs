@@ -80,9 +80,11 @@ internal static class DocumentSigning
 
 		// ****************** IssuerSerial Field ******************
 		writer.PushSequence();
+
 		writer.PushSequence();
 		writer.WriteEncodedValue(certificate.IssuerName.RawData);
 		writer.PopSequence();
+
 		writer.WriteInteger(int.Parse(certificate.SerialNumber, System.Globalization.NumberStyles.HexNumber));
 		writer.PopSequence();
 

@@ -40,7 +40,7 @@ internal static class Token
 			_identityUrl = await WebApiParameter.GetParameterByKey(sqlDbConnectionStr, "IdentityUrl");
 		}
 
-		token = await GetTokenFromWebApiAsync(httpClient, authorizationCode, _identityUrl);
+		token = await GetTokenFromWebApiAsync(authorizationCode, _identityUrl);
 		_tokenStartTime = DateTime.UtcNow;
 
 		await Credential.PersistTokenToDbAsync(token, sqlDbConnectionStr);
@@ -59,9 +59,10 @@ internal static class Token
 		return true;
 	}
 
-	private static async Task<string> GetTokenFromWebApiAsync(HttpClient client, string authorizationCode, string identityUrl)
+	private static async Task<string> GetTokenFromWebApiAsync(string authorizationCode, string identityUrl)
 	{
-		client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authorizationCode);
+		HttpClient httpClient = new();
+		httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authorizationCode);
 
 		Dictionary<string, string> requestContent = new()
 		{
@@ -69,7 +70,7 @@ internal static class Token
 		};
 
 		FormUrlEncodedContent content = new(requestContent);
-		HttpResponseMessage response = await client.PostAsync(identityUrl, content);
+		HttpResponseMessage response = await httpClient.PostAsync(identityUrl, content);
 		if (!response.IsSuccessStatusCode)
 		{
 			AuthenticationErrorModel errorResponse = await response.Content.ReadFromJsonAsync<AuthenticationErrorModel>();
@@ -82,9 +83,10 @@ internal static class Token
 #if DEBUG
 		if (System.IO.Directory.Exists("c:\\Doc\\DebugOutput"))
 		{
-			System.IO.File.WriteAllLines("c:\\Doc\\DebugOutput\\Token.txt", new string[] { client.DefaultRequestHeaders.Authorization.Parameter });
+			System.IO.File.WriteAllLines("c:\\Doc\\DebugOutput\\Token.txt", new string[] { httpClient.DefaultRequestHeaders.Authorization.Parameter });
 		}
 #endif
+		httpClient.Dispose();
 		return jsonResponse.AccessToken;
 	}
 
