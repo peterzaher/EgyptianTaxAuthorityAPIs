@@ -14,28 +14,24 @@ internal static class DocumentSigning
 		X509Certificate2 signerCertificate = GetSigningCertificate();
 
 		Oid messageDigestOid = new("1.2.840.113549.1.7.5");
-		ContentInfo content = new(messageDigestOid, documentAsBytes);
+		System.Security.Cryptography.Pkcs.ContentInfo content = new(messageDigestOid, documentAsBytes);
 		SignedCms signedCms = new(SubjectIdentifierType.IssuerAndSerialNumber, content, true);
+
 		CmsSigner signer = new(SubjectIdentifierType.IssuerAndSerialNumber, signerCertificate);
 		signer.IncludeOption = X509IncludeOption.EndCertOnly;
-		signer.SignedAttributes.Add(new Pkcs9SigningTime(DateTime.Now));
 
-		//Signature.GetSignature(signerCertificate);
-
+		signer.SignedAttributes.Add(new Pkcs9SigningTime(DateTime.UtcNow));
 		Pkcs9AttributeObject signingCertV2Encoded = CreateSigningAttribute(signerCertificate);
-
-		string test = signingCertV2Encoded.Format(true);
-
 		signer.SignedAttributes.Add(signingCertV2Encoded);
 
 		if (!signer.Certificate.HasPrivateKey)
 		{
 			throw new Exception("No private key found");
 		}
+
 		try
 		{
 			await Task.Run(() => signedCms.ComputeSignature(signer, false));
-			await Task.Run(() => signedCms.CheckSignature(false));
 		}
 		catch (CryptographicException e)
 		{
@@ -69,33 +65,36 @@ internal static class DocumentSigning
 	{
 		AsnWriter writer = new(AsnEncodingRules.DER);
 
-		AsnWriter.Scope signingCertificate = writer.PushSequence();
+		AsnWriter.Scope signingCertificate = writer.PushSequence(); //parent seq of 2 elm
 
 		// ****************** ESSCertIDV2 Field ******************
-		AsnWriter.Scope essCertIDv2 = writer.PushSequence();
+		AsnWriter.Scope essCertIDv2 = writer.PushSequence(); //seq 1
 
 		writer.PushSequence();
-
 		writer.WriteOctetString(certificate.GetCertHash(HashAlgorithmName.SHA256));
 
 		// ****************** IssuerSerial Field ******************
-		writer.PushSequence();
+		writer.PushSequence(); //sub seq of 2 elm
 
+		//Issuer feild
 		writer.PushSequence();
+		AsnWriter.Scope contextSpecific = writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 4, true));
 		writer.WriteEncodedValue(certificate.IssuerName.RawData);
+		contextSpecific.Dispose();
 		writer.PopSequence();
 
+		//Serial field
 		writer.WriteInteger(int.Parse(certificate.SerialNumber, System.Globalization.NumberStyles.HexNumber));
-		writer.PopSequence();
+		writer.PopSequence(); //pop seq of 2 elm
 
 		writer.PopSequence();
 
 		essCertIDv2.Dispose();
 
-		signingCertificate.Dispose();
+		signingCertificate.Dispose(); //pop parent seq
 
 		Pkcs9AttributeObject signingAttribute = new(@"1.2.840.113549.1.9.16.2.47", writer.Encode());
-
+	
 #if DEBUG
 		string textstring = signingAttribute.Format(true);
 #endif
