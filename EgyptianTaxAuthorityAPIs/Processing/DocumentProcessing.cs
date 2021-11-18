@@ -1,16 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using System.Reflection;
-using System.Security.Cryptography.Pkcs;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Cryptography;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Runtime.CompilerServices;
 using EInvoicing.DocumentComponent;
-using System.Formats.Asn1;
 
 #if DEBUG
 [assembly: InternalsVisibleTo("UIApplication")]

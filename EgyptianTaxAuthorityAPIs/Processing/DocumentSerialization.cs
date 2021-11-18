@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Unicode;
 using EInvoicing.DocumentComponent;
 
 namespace EInvoicing.Processing;
@@ -111,7 +113,8 @@ internal static class DocumentSerialization
 		{
 			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
 			PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-			Converters = { new JsonStringEnumConverter() }
+			Converters = { new JsonStringEnumConverter() },
+			Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
 		};
 
 		string result = JsonSerializer.Serialize(documentList, options);
