@@ -30,6 +30,5 @@ public class SubmissionQuery
 
 		SubmissionQuery submissionStatus = await client.GetFromJsonAsync<SubmissionQuery>(path, options);
 		return submissionStatus;
-
 	}
 }

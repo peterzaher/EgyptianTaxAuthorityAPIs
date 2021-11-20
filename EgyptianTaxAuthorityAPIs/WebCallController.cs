@@ -17,7 +17,7 @@ namespace EInvoicing;
 public class WebCallController
 {
 	private static HttpClient Client { get; } = new();
-	public string SqlConnectionStr { get; set; }
+	public static string SqlConnectionStr { get; set; }
 
 	public WebCallController(string sqlDBConnectionString = "data source=dbsrv1;initial catalog=manufacturing;user id=sa;password=''")
 	{
@@ -28,7 +28,7 @@ public class WebCallController
 	public async Task<SubmissionResponseModel> SubmitDocumentsAsync(IList<DocumentModel> documents)
 	{
 		await Token.GetAccessTokenAsync(Client, SqlConnectionStr);
-		string jsonDocs = await DocumentProcessing.PrepareDocumentsToSend(documents);
+		string jsonDocs = await DocumentProcessing.PrepareDocumentsToSend(documents, SqlConnectionStr);
 		return await DocumentModel.SubmitDocumentsAsync(jsonDocs, Client);
 	}
 

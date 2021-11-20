@@ -15,13 +15,13 @@ namespace EInvoicing.Processing;
 
 internal static class DocumentProcessing
 {
-	public static async Task<string> PrepareDocumentsToSend(IList<DocumentModel> documentList)
+	public static async Task<string> PrepareDocumentsToSend(IList<DocumentModel> documentList, string sqlDbConnectionStr)
 	{
 		foreach (DocumentModel doc in documentList)
 		{
 			string documentAsTxt = await Task.Run(() => DocumentSerialization.ConvertDocumentToText(doc));
 			byte[] documentUtf8Encoded = Encoding.UTF8.GetBytes(documentAsTxt);
-			string signedDocument = await DocumentSigning.ComputeSignture(documentUtf8Encoded);
+			string signedDocument = await DocumentSigning.ComputeSignture(documentUtf8Encoded, sqlDbConnectionStr );
 			SignatureModel signature = new(signedDocument);
 			doc.Signatures.Add(signature);
 		}

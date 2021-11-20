@@ -18,7 +18,7 @@ internal static class WebApiParameter
 		using SqlCommand cmd = conn.CreateCommand();
 		cmd.CommandType = CommandType.StoredProcedure;
 		cmd.CommandText = "eta.usp_GetParameterByKey";
-		cmd.Parameters.Add("@key", SqlDbType.VarChar, 20).Value = key;
+		cmd.Parameters.Add("@key", SqlDbType.NVarChar, 22).Value = key;
 
 		conn.OpenAsync().Wait();
 

@@ -4,14 +4,21 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using DataAccess;
 
 namespace EInvoicing.Processing;
 
 internal static class DocumentSigning
 {
-	internal static async Task<string> ComputeSignture(byte[] documentAsBytes)
+	private static string _certificateSubjectName;
+	internal static async Task<string> ComputeSignture(byte[] documentAsBytes, string sqlDbConnectionStr)
 	{
-		X509Certificate2 signerCertificate = GetSigningCertificate();
+		if (string.IsNullOrEmpty(_certificateSubjectName))
+		{
+			_certificateSubjectName = await WebApiParameter.GetParameterByKey(sqlDbConnectionStr, "CertificateSubjectName");
+		}
+
+		X509Certificate2 signerCertificate = GetSigningCertificate(_certificateSubjectName);
 
 		Oid messageDigestOid = new("1.2.840.113549.1.7.5");
 		System.Security.Cryptography.Pkcs.ContentInfo content = new(messageDigestOid, documentAsBytes);
@@ -41,24 +48,14 @@ internal static class DocumentSigning
 		return Convert.ToBase64String(encoded);
 	}
 
-	private static X509Certificate2 GetSigningCertificate()
+	private static X509Certificate2 GetSigningCertificate(string subjectName)
 	{
 		X509Store store = new(StoreName.My, StoreLocation.CurrentUser);
-		try
-		{
-			store.Open(OpenFlags.OpenExistingOnly);
-			X509Certificate2Collection certCollection = store.Certificates;
-			X509Certificate2Collection certificates = certCollection.Find(X509FindType.FindBySubjectName, @"شركه المنزل للمفروشات هابيتات", true);
-			if (certificates.Count == 0)
-			{
-				return null;
-			}
-			return certificates[0];
-		}
-		catch (Exception e)
-		{
-			throw new Exception("Error finding a valid certificate", e);
-		}
+		store.Open(OpenFlags.OpenExistingOnly);
+		X509Certificate2Collection certCollection = store.Certificates;
+
+		X509Certificate2Collection certificates = certCollection.Find(X509FindType.FindBySubjectName, subjectName, true);
+		return certificates[0];
 	}
 
 	private static Pkcs9AttributeObject CreateSigningAttribute(X509Certificate2 certificate)
@@ -94,7 +91,7 @@ internal static class DocumentSigning
 		signingCertificate.Dispose(); //pop parent seq
 
 		Pkcs9AttributeObject signingAttribute = new(@"1.2.840.113549.1.9.16.2.47", writer.Encode());
-	
+
 #if DEBUG
 		string textstring = signingAttribute.Format(true);
 #endif
