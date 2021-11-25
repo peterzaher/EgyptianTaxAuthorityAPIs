@@ -1,6 +1,8 @@
-﻿namespace EInvoicing.WebApiResponse;
+﻿using Domain.ResponseModels;
 
-public class InvoiceLineItemCodesModel
+namespace EInvoicing.WebApiResponse;
+
+public class InvoiceLineItemCodesModel : IInvoiceLineItemCodesModel
 {
 	public int CodeTypeId { get; set; }
 	public string CodeTypeNamePrimaryLang { get; set; }

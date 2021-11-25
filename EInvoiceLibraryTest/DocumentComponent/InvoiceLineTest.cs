@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using EInvoicing.DocumentComponent;
+using Domain.Enum;
 
 namespace EInvoiceUnitTests.DocumentComponent;
 

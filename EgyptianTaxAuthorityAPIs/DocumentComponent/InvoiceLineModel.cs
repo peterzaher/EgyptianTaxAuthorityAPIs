@@ -1,16 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using Domain.Enum;
+using Domain.DocumentModels;
 
 namespace EInvoicing.DocumentComponent
 {
-	public class InvoiceLineModel
+	public class InvoiceLineModel : IInvoiceLineModel
 	{
 		//external code part
 		private const string _externalCode = "EG-204961254-";
 		private const string _codeType = "EGS";
 		private DiscountModel _discount;
-		private IList<TaxableItemModel> _taxableItems;
+		private IList<ITaxableItemModel> _taxableItems;
 
 		public InvoiceLineModel(string itemInternalCode, decimal quantity, decimal unitValue, UnitTypeCode unitType = UnitTypeCode.EA)
 		{
@@ -20,7 +21,8 @@ namespace EInvoicing.DocumentComponent
 			Quantity = quantity;
 			UnitValue = new UnitValueModel(unitValue);
 			UnitType = unitType;
-			TaxableItems = new List<TaxableItemModel>();
+			TaxableItems = new List<ITaxableItemModel>();
+			Discount = new DiscountModel(0);
 		}
 		public string InternalCode { get; set; }
 
@@ -34,13 +36,13 @@ namespace EInvoicing.DocumentComponent
 		public string ItemCode { get; }
 
 		[JsonPropertyName("unitType")]
-		public UnitTypeCode UnitType { get; set; }// = "EA"; //Other values: "KGM"/"MTQ"
+		public UnitTypeCode UnitType { get; set; }
 
 		[JsonPropertyName("quantity")]
 		public decimal Quantity { get; set; }
 
 		[JsonPropertyName("unitValue")]
-		public UnitValueModel UnitValue { get; set; }
+		public IUnitValueModel UnitValue { get; set; }
 
 		// item price * quantity
 
@@ -57,27 +59,24 @@ namespace EInvoicing.DocumentComponent
 		public decimal TotalTaxableFees { get; set; }
 
 		[JsonPropertyName("discount")]
-		public DiscountModel Discount
+		public IDiscountModel Discount
 		{
-			set => _discount = value;
+			set => _discount = (DiscountModel)value;
 			get {
-				//if (discount == null) discount = new DiscountModel(0);
-				if (_discount != null)
-				{
-					_discount.Amount = SalesTotal * _discount.Rate / 100M;
-				}
+
+				_discount.Amount = SalesTotal * _discount.Rate / 100M;
 				return _discount;
 			}
 		}
 
 		[JsonPropertyName("netTotal")]
-		public decimal NetTotal => SalesTotal - (Discount?.Amount ?? 0M);
+		public decimal NetTotal => SalesTotal - Discount.Amount;
 
 		[JsonPropertyName("itemsDiscount")]
 		public decimal ItemsDiscount { get; set; } //non-taxable items discount
 
 		[JsonPropertyName("taxableItems")]
-		public IList<TaxableItemModel> TaxableItems
+		public IList<ITaxableItemModel> TaxableItems
 		{
 			get {
 				foreach (TaxableItemModel item in _taxableItems)

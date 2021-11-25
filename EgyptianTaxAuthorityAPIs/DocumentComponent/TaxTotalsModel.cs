@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using Domain.DocumentModels;
 
 namespace EInvoicing.DocumentComponent
 {
-	public class TaxTotalsModel
+	public class TaxTotalsModel : ITaxTotalsModel
 	{
 		public TaxTotalsModel() { }
 		public TaxTotalsModel(string taxType, decimal amount)

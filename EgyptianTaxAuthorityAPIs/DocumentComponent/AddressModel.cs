@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Domain.DocumentModels;
 
 namespace EInvoicing.DocumentComponent
 {
-	public class AddressModel
+	public class AddressModel : IAddressModel
 	{
 		public AddressModel(string country, string governate, string regionCity, string street, string buildingNumber, string branchId = "")
 		{

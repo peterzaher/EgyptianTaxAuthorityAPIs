@@ -4,7 +4,7 @@ using System.Net.Http.Json;
 
 namespace EInvoicing.WebApiResponse;
 
-internal class Document
+internal class RecentDocumentResponseModel
 {
 	public async Task<DocumentStatusModel> GetDocumentAsync(HttpClient httpClient, string documentUuid)
 	{

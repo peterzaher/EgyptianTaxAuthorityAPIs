@@ -1,4 +1,5 @@
-﻿using EInvoicing.WebApiResponse;
+﻿using Domain.DocumentModels;
+using EInvoicing.WebApiResponse;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,12 +11,12 @@ using System.Threading.Tasks;
 
 namespace EInvoicing.DocumentComponent;
 
-public class DocumentModel
+public class DocumentModel : IDocumentModel
 {
 	//activityCode: 3100
 	private string _dateTimeIssued;
 
-	public DocumentModel(IssuerReceiverInfoModel issuer, IssuerReceiverInfoModel receiver, IList<InvoiceLineModel> invoices, string invoiceInternalId)
+	public DocumentModel(IIssuerReceiverInfoModel issuer, IIssuerReceiverInfoModel receiver, IList<IInvoiceLineModel> invoices, string invoiceInternalId)
 	{
 		Issuer = issuer ?? throw new ArgumentNullException(nameof(issuer), "Issuer cannot be null");
 		Receiver = receiver ?? throw new ArgumentNullException(nameof(receiver), "Receiver cannot be null");
@@ -33,16 +34,14 @@ public class DocumentModel
 	[JsonPropertyName("dateTimeIssued")]
 	public string DateTimeIssued
 	{
-		set
-		{
+		set {
 			if (!DateTime.TryParse(value, out DateTime dt))
 			{
 				throw new Exception("Invalid date format");
 			}
 			_dateTimeIssued = dt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ");
 		}
-		get
-		{
+		get {
 			if (string.IsNullOrEmpty(_dateTimeIssued)) _dateTimeIssued = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ");
 			return _dateTimeIssued;
 		}
@@ -70,19 +69,19 @@ public class DocumentModel
 	public string ProformaInvoiceNumber { get; set; } = "";
 
 	[JsonPropertyName("payment")]
-	public PaymentModel Payment { get; set; }
+	public IPaymentModel Payment { get; set; }
 
 	[JsonPropertyName("delivery")]
-	public DeliveryModel Delivery { get; set; }
+	public IDeliveryModel Delivery { get; set; }
 
 	[JsonPropertyName("issuer")]
-	public IssuerReceiverInfoModel Issuer { get; set; }
+	public IIssuerReceiverInfoModel Issuer { get; set; }
 
 	[JsonPropertyName("receiver")]
-	public IssuerReceiverInfoModel Receiver { get; set; }
+	public IIssuerReceiverInfoModel Receiver { get; set; }
 
 	[JsonPropertyName("invoiceLines")]
-	public IList<InvoiceLineModel> InvoiceLines { get; set; }
+	public IList<IInvoiceLineModel> InvoiceLines { get; set; }
 
 	//sum of all salesAmount in all invoice lines
 	[JsonPropertyName("totalSalesAmount")]
@@ -104,14 +103,14 @@ public class DocumentModel
 
 	//public taxTotals needs implement
 	[JsonPropertyName("taxTotals")]
-	public List<TaxTotalsModel> TaxTotals => GetTaxTotals();
+	public List<ITaxTotalsModel> TaxTotals => GetTaxTotals();
 
 	//totalAmount = (netAmount + taxTotals) at document level
 	[JsonPropertyName("totalAmount")]
 	public decimal TotalAmount => NetAmount + GetTaxtotalAmount();
 
 	[JsonPropertyName("signatures")]
-	public List<SignatureModel> Signatures { get; set; } = new();
+	public List<ISignatureModel> Signatures { get; set; } = new();
 
 	private decimal GetTotalSalesAmount()
 	{
@@ -160,10 +159,10 @@ public class DocumentModel
 		return total;
 	}
 
-	List<TaxTotalsModel> GetTaxTotals()
+	private List<ITaxTotalsModel> GetTaxTotals()
 	{
-		List<TaxableItemModel> TaxInvoiceAll = new();
-		List<TaxTotalsModel> taxTotals = new();
+		List<ITaxableItemModel> TaxInvoiceAll = new();
+		List<ITaxTotalsModel> taxTotals = new();
 
 		foreach (var invoice in InvoiceLines)
 		{
@@ -213,14 +212,4 @@ public class DocumentModel
 		SubmissionResponseModel submitResponse = await response.Content.ReadFromJsonAsync<SubmissionResponseModel>();
 		return submitResponse;
 	}
-
-	//internal static void GetSubmissionId(HttpHeaders headers)
-	//{
-	//	IEnumerable<string> correlationId = headers.GetValues("correlationId");
-	//	string resultHeader = "";
-	//	foreach (string str in correlationId)
-	//	{
-	//		resultHeader += str;
-	//	}
-	//}
 }

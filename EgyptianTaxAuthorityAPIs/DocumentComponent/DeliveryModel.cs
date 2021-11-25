@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Domain.DocumentModels;
 
 namespace EInvoicing.DocumentComponent
 {
-	public class DeliveryModel
+	public class DeliveryModel : IDeliveryModel
 	{
 		public DeliveryModel() { }
 		public DeliveryModel(string countryOfOrigin, string dateValidity)

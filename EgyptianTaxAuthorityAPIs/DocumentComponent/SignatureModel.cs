@@ -1,8 +1,9 @@
 ﻿using System.Text.Json.Serialization;
+using Domain.DocumentModels;
 
 namespace EInvoicing.DocumentComponent
 {
-	public class SignatureModel
+	public class SignatureModel : ISignatureModel
 	{
 		[JsonPropertyName("signatureType")]
 		public string SignatureType { get; set; } = "I";

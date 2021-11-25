@@ -29,6 +29,8 @@ public class WebCallController
 	{
 		await Token.GetAccessTokenAsync(Client, SqlConnectionStr);
 		string jsonDocs = await DocumentProcessing.PrepareDocumentsToSend(documents, SqlConnectionStr);
+		//Persist submission status
+
 		return await DocumentModel.SubmitDocumentsAsync(jsonDocs, Client);
 	}
 
@@ -47,7 +49,7 @@ public class WebCallController
 	public async Task<DocumentStatusModel> GetDocumentStatusAsync(string documentUuid)
 	{
 		await Token.GetAccessTokenAsync(Client, SqlConnectionStr);
-		Document document = new();
+		RecentDocumentResponseModel document = new();
 		return await document.GetDocumentAsync(Client, documentUuid);
 	}
 }

@@ -1,8 +1,9 @@
 ﻿using System.Text.Json.Serialization;
+using Domain.DocumentModels;
 
 namespace EInvoicing.DocumentComponent
 {
-	public class UnitValueModel
+	public class UnitValueModel : IUnitValueModel
 	{
 		[JsonPropertyName("")]
 		private decimal _amountEGP;
@@ -14,8 +15,7 @@ namespace EInvoicing.DocumentComponent
 		public decimal AmountEGP //amount in EGP (Egyptian Pound)
 		{
 			set => _amountEGP = value;
-			get
-			{
+			get {
 				if (CurrencySold == "EGP") { return _amountEGP; }
 				return AmountSold * CurrencyExchangeRate;
 

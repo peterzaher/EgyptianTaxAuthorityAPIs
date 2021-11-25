@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 
 
-namespace EInvoicing.DocumentComponent
+namespace Domain.Enum
 {
 	public enum TaxTypeCode
 	{

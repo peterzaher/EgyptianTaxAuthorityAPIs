@@ -1,8 +1,9 @@
 ﻿using System.Text.Json.Serialization;
+using Domain.ResponseModels;
 
 namespace EInvoicing.WebApiResponse
 {
-	public class AcceptedDocumentModel
+	public class AcceptedDocumentModel : IAcceptedDocumentModel
 	{
 		[JsonPropertyName("uuid")]
 		public string UUID { get; set; }

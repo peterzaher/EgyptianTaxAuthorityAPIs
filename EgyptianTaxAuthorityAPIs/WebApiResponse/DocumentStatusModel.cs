@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
+using Domain.ResponseModels;
 
 namespace EInvoicing.WebApiResponse;
 
-public class DocumentStatusModel
+public class DocumentStatusModel : IDocumentStatusModel
 {
 	public string Uuid { get; set; }
 	public string SubmissionUUID { get; set; }
@@ -21,6 +22,6 @@ public class DocumentStatusModel
 	public decimal NetAmount { get; set; }
 	public decimal Total { get; set; }
 	public string Status { get; set; }
-	public IList<InvoiceLineItemCodesModel> InvoiceLineItemCodes { get; set; }
-	public ValidationResultModel ValidationResults { get; set; }
+	public IList<IInvoiceLineItemCodesModel> InvoiceLineItemCodes { get; set; }
+	public IValidationResultModel ValidationResults { get; set; }
 }
