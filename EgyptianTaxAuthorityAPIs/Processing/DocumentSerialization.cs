@@ -146,6 +146,11 @@ internal static class DocumentSerialization
 			JsonProperty property = docEnum.Current;
 			JsonValueKind valueKinkd = property.Value.ValueKind;
 
+			if (property.Name == "signatures")
+			{
+				continue;
+			}
+
 			if (valueKinkd is not JsonValueKind.Object && valueKinkd is not JsonValueKind.Array)
 			{
 				result += $"\"{property.Name}\"\"{property.Value}\"";
@@ -176,6 +181,13 @@ internal static class DocumentSerialization
 				continue;
 			}
 		}
+
+#if DEBUG
+		if (System.IO.Directory.Exists("c:\\Doc\\DebugOutput"))
+		{
+			System.IO.File.WriteAllBytes(@"c:\doc\debugoutput\canonical.txt", Encoding.UTF8.GetBytes(result));
+		}
+#endif
 		return result;
 	}
 }

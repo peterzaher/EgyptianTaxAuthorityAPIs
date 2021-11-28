@@ -12,12 +12,13 @@ namespace DataAccess;
 
 internal static class Submission
 {
-	internal static async Task PersistSubmissionResponse(ISubmissionResponseModel submissionResponse, string sqlConnectionStr)
+	internal static async Task InsertSubmissionAsync(string submissionId, string submissionDetail, string sqlConnectionStr)
 	{
 		using SqlConnection sqlConnection = new(sqlConnectionStr);
-		using SqlCommand cmd = new("eta.usp_InsertSubmissionResponse", sqlConnection);
+		using SqlCommand cmd = new("eta.usp_InsertSubmission", sqlConnection);
 		cmd.CommandType = CommandType.StoredProcedure;
-		cmd.Parameters.Add("@SubmissionId", SqlDbType.Char, 26).Value = submissionResponse.SubmissionId;
+		cmd.Parameters.Add("@SubmissionId", SqlDbType.Char, 26).Value = submissionId;
+		cmd.Parameters.Add("@SubmissionDetail", SqlDbType.VarChar).Value = submissionDetail;
 
 		await sqlConnection.OpenAsync();
 		await cmd.ExecuteNonQueryAsync();

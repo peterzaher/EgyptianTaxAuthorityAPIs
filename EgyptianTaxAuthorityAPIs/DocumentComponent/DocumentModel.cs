@@ -1,4 +1,5 @@
-﻿using Domain.DocumentModels;
+﻿using DataAccess;
+using Domain.DocumentModels;
 using EInvoicing.WebApiResponse;
 using System;
 using System.Collections.Generic;
@@ -185,31 +186,5 @@ public class DocumentModel : IDocumentModel
 			taxTotals.Add(taxItem);
 		}
 		return taxTotals;
-	}
-
-	internal static async Task<SubmissionResponseModel> SubmitDocumentsAsync(string jsonSerializedDocuments, HttpClient httpClient)
-	{
-		Encoding encoding = new UTF8Encoding(false, true);
-		StringContent content = new(jsonSerializedDocuments, encoding, @"application/json");
-
-		HttpResponseMessage response = await httpClient.PostAsync(@"/api/v1.0/documentsubmissions", content);
-
-		if ((int)response.StatusCode == 400)
-		{
-			throw new Exception("Error bad structure or maximum size exceeded");
-		}
-
-		if ((int)response.StatusCode == 403)
-		{
-			throw new Exception("Incorrect submitter");
-		}
-
-		if ((int)response.StatusCode == 422)
-		{
-			throw new Exception("Duplicate submimssion, try again later");
-		}
-
-		SubmissionResponseModel submitResponse = await response.Content.ReadFromJsonAsync<SubmissionResponseModel>();
-		return submitResponse;
 	}
 }
