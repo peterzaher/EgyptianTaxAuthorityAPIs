@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Domain.DocumentModels;
 
 namespace EInvoicing.DocumentComponent
 {
-	public class PaymentModel
+	public class PaymentModel : IPaymentModel
 	{
 		public PaymentModel() { }
 		public PaymentModel(string bankName, string bankAccountNo)

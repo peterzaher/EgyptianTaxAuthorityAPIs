@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Unicode;
+using System.Threading.Tasks;
 using EInvoicing.DocumentComponent;
 
 namespace EInvoicing.Processing;
@@ -111,7 +114,8 @@ internal static class DocumentSerialization
 		{
 			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
 			PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-			Converters = { new JsonStringEnumConverter() }
+			Converters = { new JsonStringEnumConverter() },
+			Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
 		};
 
 		string result = JsonSerializer.Serialize(documentList, options);
@@ -123,6 +127,67 @@ internal static class DocumentSerialization
 		}
 #endif
 
+		return result;
+	}
+
+	internal static string GetDocumentCanonicalString(string doc)
+	{
+		if (string.IsNullOrEmpty(doc))
+		{
+			return "{}";
+		}
+
+		string result = string.Empty;
+		JsonDocument jdoc = JsonDocument.Parse(doc);
+		JsonElement.ObjectEnumerator docEnum = jdoc.RootElement.EnumerateObject();
+
+		while (docEnum.MoveNext())
+		{
+			JsonProperty property = docEnum.Current;
+			JsonValueKind valueKinkd = property.Value.ValueKind;
+
+			if (property.Name == "signatures")
+			{
+				continue;
+			}
+
+			if (valueKinkd is not JsonValueKind.Object && valueKinkd is not JsonValueKind.Array)
+			{
+				result += $"\"{property.Name}\"\"{property.Value}\"";
+				continue;
+			}
+
+			if (valueKinkd == JsonValueKind.Object)
+			{
+				result += $"\"{property.Name}\"";
+				result += GetDocumentCanonicalString(property.Value.GetRawText());
+			}
+
+			if (valueKinkd == JsonValueKind.Array)
+			{
+				result += $"\"{property.Name}\"\"{property.Name}\"";
+				JsonElement.ArrayEnumerator arrayEnum = property.Value.EnumerateArray();
+
+				while (arrayEnum.MoveNext())
+				{
+					JsonElement arrayElm = arrayEnum.Current;
+					if (arrayElm.ValueKind is JsonValueKind.Object)
+					{
+						result += GetDocumentCanonicalString(arrayElm.GetRawText());
+						continue;
+					}
+					result += $"\"{arrayElm.GetRawText()}\"";
+				}
+				continue;
+			}
+		}
+
+#if DEBUG
+		if (System.IO.Directory.Exists("c:\\Doc\\DebugOutput"))
+		{
+			System.IO.File.WriteAllBytes(@"c:\doc\debugoutput\canonical.txt", Encoding.UTF8.GetBytes(result));
+		}
+#endif
 		return result;
 	}
 }

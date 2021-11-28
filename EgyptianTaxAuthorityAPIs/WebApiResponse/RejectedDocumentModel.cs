@@ -1,13 +1,14 @@
 ﻿using System.Text.Json.Serialization;
+using Domain.ResponseModels;
 
 namespace EInvoicing.WebApiResponse
 {
-	public class RejectedDocumentModel
+	public class RejectedDocumentModel : IRejectedDocumentModel
 	{
 		[JsonPropertyName("internalId")]
 		public string InternalId { get; set; }
 
 		[JsonPropertyName("error")]
-		public ErrorModel Error { get; set; }
+		public IErrorModel Error { get; set; }
 	}
 }

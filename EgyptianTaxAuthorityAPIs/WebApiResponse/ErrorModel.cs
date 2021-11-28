@@ -1,9 +1,10 @@
 ﻿using System.Text.Json.Serialization;
 using System.Collections.Generic;
+using Domain.ResponseModels;
 
 namespace EInvoicing.WebApiResponse
 {
-	public class ErrorModel
+	public class ErrorModel : IErrorModel
 	{
 		[JsonPropertyName("code")]
 		public string Code { get; set; }
@@ -18,6 +19,6 @@ namespace EInvoicing.WebApiResponse
 		public string PropertyPath { get; set; }
 
 		[JsonPropertyName("details")]
-		public List<ErrorModel> Details { get; set; }// = new();
+		public List<IErrorModel> Details { get; set; }// = new();
 	}
 }

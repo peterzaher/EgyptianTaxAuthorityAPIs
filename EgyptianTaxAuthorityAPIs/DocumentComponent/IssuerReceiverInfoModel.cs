@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Domain.DocumentModels;
 
 namespace EInvoicing.DocumentComponent
 {
-	public class IssuerReceiverInfoModel
+	public class IssuerReceiverInfoModel : IIssuerReceiverInfoModel
 	{
 		public IssuerReceiverInfoModel(string name, string id, string type, AddressModel address)
 		{
@@ -26,7 +26,7 @@ namespace EInvoicing.DocumentComponent
 		public string Type { get; }
 
 		[JsonPropertyName("address")]
-		public AddressModel Address { get; }
+		public IAddressModel Address { get; }
 
 		private void ValidateInputValues()
 		{

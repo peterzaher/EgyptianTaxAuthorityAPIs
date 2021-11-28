@@ -54,7 +54,7 @@ internal static class Credential
 	internal static async Task PersistTokenToDbAsync(string token, string sqlConnectionStr)
 	{
 		using SqlConnection conn = new(sqlConnectionStr);
-		using SqlCommand cmd = new("eta.usp_SaveToken", conn);
+		using SqlCommand cmd = new("eta.usp_InsertToken", conn);
 		cmd.CommandType = CommandType.StoredProcedure;
 		cmd.Parameters.Add("@token", SqlDbType.VarChar).Value = token;
 

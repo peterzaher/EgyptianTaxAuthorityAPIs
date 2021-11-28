@@ -1,6 +1,8 @@
-﻿namespace EInvoicing.WebApiResponse;
+﻿using Domain.ResponseModels;
 
-public class ValidationStepsModel
+namespace EInvoicing.WebApiResponse;
+
+public class ValidationStepsModel : IValidationStepsModel
 {
 	public string Name { get; set; }
 	public string Status { get; set; }

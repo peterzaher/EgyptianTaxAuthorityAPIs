@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using Domain.Enum;
+using Domain.DocumentModels;
 using EInvoicing.DocumentComponent;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -87,7 +89,7 @@ public class DocumentModelTests
 		invoiceLine1.TaxableItems.Add(taxableItem1);
 		invoiceLine2.TaxableItems.Add(taxableItem1);
 
-		List<InvoiceLineModel> invoiceLines = new() { invoiceLine1, invoiceLine2 };
+		List<IInvoiceLineModel> invoiceLines = new() { invoiceLine1, invoiceLine2 };
 		DocumentModel documentModel = new(issuer, receiver, invoiceLines, "62108396")
 		{
 			ExtraDiscountAmount = 0,
